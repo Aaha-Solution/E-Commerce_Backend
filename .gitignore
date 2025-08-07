@@ -1,0 +1,19 @@
+# Node modules (always ignore)
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# OS & editor files
+.DS_Store
+.vscode/
+
+# Optional: ignore build artifacts or temp files
+dist/
+tmp/
+
+# Don't ignore all JSON files (important ones like package.json are needed)
+*.json
