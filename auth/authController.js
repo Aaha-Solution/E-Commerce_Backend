@@ -1,67 +1,46 @@
-const authModels = require('./authModels');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('../db');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const AuthModel = require("../auth/authModels");
+
+const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 
 class AuthController {
-    async createUser(req, res) {
-        const { username, email, password, role } = req.body;
+  // User Signup
+  static async signup(req, res) {
+    try {
+      const { firstname, lastname, email, password } = req.body;
 
-        if (!username || !email || !password) {
-            return res.status(400).json({ message: "Username, email, and password are required" });
-        }
+      const existing = await AuthModel.findByEmail(email);
+      if (existing) return res.status(400).json({ message: "Email already exists" });
 
-        try {
-            const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-            if (existingUsers.length > 0) {
-                return res.status(400).json({ message: "User already exists" });
-            }
+      const userId = await AuthModel.create(firstname, lastname, email, hashedPassword, "user");
 
-           const hashedPassword = await bcrypt.hash(password, 10);
-
-            await authModels.createUser(username, email, hashedPassword, role); 
-            console.log("User created successfully:", username);
-
-            res.status(201).json({ message: "User created successfully" });
-
-        } catch (error) {
-            console.error("Error creating user:", error);
-            res.status(500).json({ message: "Internal server error" });
-        }
+      res.json({ message: "User registered successfully", userId });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
+  }
 
-    async login(req, res) {
-        const { email, password } = req.body;
+  // Login (Admin + User)
+  static async login(req, res) {
+    try {
+      const { email, password } = req.body;
+      const user = await AuthModel.findByEmail(email);
 
-        if (!email || !password) {
-            return res.status(400).json({ message: "Email and password are required" });
-        }
+      if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-        try {
-            const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-            const user = users[0];
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) return res.status(400).json({ message: "Invalid credentials" });
 
-            if (!user) {
-                return res.status(401).json({ message: "Invalid credentials" });
-            }
+      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "1h" });
 
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
-                return res.status(401).json({ message: "Invalid credentials" });
-            }
-
-            const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            // Add role-based redirect path
-            const redirectTo = user.role === 'admin' ? '/adminpanel' : '/userdashboard';
-
-            res.status(200).json({ message: "Login successful", token, role: user.role, redirectTo });
-
-        } catch (error) {
-            console.error("Login error:", error);
-            res.status(500).json({ message: "Internal server error" });
-        }
+      res.json({ message: "Login successful", token, role: user.role });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
+  }
 }
 
-module.exports = new AuthController();
+module.exports = AuthController;

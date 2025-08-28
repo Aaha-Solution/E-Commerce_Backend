@@ -1,14 +1,18 @@
-const db = require('../db');
+const db = require("../db");
 
-const createUser = async (username, email, hashedPassword, role) => {
-    try {
-        const query = 'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)';
-        await db.query(query, [username, email, hashedPassword, role]);
-        console.log("User inserted into database:", email);
-    } catch (error) {
-        console.error("Error inserting user:", error);
-        throw error;
-    }
-};
+class AuthModel {
+  static async create(firstname, lastname, email, password, role = "user") {
+    const [result] = await db.query(
+      "INSERT INTO users (firstname, lastname, email, password, role) VALUES (?, ?, ?, ?, ?)",
+      [firstname, lastname, email, password, role]
+    );
+    return result.insertId;
+  }
 
-module.exports = { createUser };
+  static async findByEmail(email) {
+    const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+    return rows[0];
+  }
+}
+
+module.exports = AuthModel;
