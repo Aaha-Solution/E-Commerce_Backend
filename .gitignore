@@ -15,5 +15,7 @@ node_modules/
 dist/
 tmp/
 
-# Don't ignore all JSON files (important ones like package.json are needed)
+# Ignore JSON files **except** package.json, package-lock.json
 *.json
+!package.json
+# !package-lock.json
