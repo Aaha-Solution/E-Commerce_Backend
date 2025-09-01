@@ -84,6 +84,32 @@ class PasswordController {
       res.status(500).json({ error: "Failed to reset password" });
     }
   }
+  // Step 2.5: Verify OTP (without resetting password)
+static async verifyOTP(req, res) {
+  try {
+    const { email, otp } = req.body;
+    console.log("Verifying OTP for:", email);
+
+    const record = await PasswordModel.findOTP(email);
+    if (!record) {
+      return res.status(400).json({ message: "No OTP found. Request again." });
+    }
+
+    if (record.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (Date.now() > record.expiry) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    res.json({ message: "OTP verified successfully" });
+  } catch (err) {
+    console.error("Error verifying OTP:", err);
+    res.status(500).json({ error: "Failed to verify OTP" });
+  }
+}
+
 }
 
 module.exports = PasswordController;
