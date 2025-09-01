@@ -19,7 +19,10 @@ class AuthController {
       const hashedPassword = await bcrypt.hash(password, 10);
       console.log("Hashed password:", hashedPassword);
 
-      const userId = await AuthModel.create(firstname, lastname, mobile, email, hashedPassword, "user");
+      const userId = await AuthModel.create(
+        firstname, lastname, email, mobile, hashedPassword, "user"
+      );
+
       console.log("User created with ID:", userId);
 
       res.json({ message: "User registered successfully", userId });
