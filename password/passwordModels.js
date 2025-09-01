@@ -1,6 +1,12 @@
 const db = require("../db");
 
 class PasswordModel {
+  // check if email exists in users table
+  static async checkUser(email) {
+    const [rows] = await db.query("SELECT id, email FROM users WHERE email=?", [email]);
+    return rows[0];
+  }
+
   static async saveOTP(email, otp, expiry) {
     const [result] = await db.query(
       "INSERT INTO password_resets (email, otp, expiry) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE otp=?, expiry=?",
@@ -10,10 +16,7 @@ class PasswordModel {
   }
 
   static async findOTP(email) {
-    const [rows] = await db.query(
-      "SELECT * FROM password_resets WHERE email=?",
-      [email]
-    );
+    const [rows] = await db.query("SELECT * FROM password_resets WHERE email=?", [email]);
     return rows[0];
   }
 
@@ -22,10 +25,7 @@ class PasswordModel {
   }
 
   static async updatePassword(email, hashedPassword) {
-    await db.query(
-      "UPDATE users SET password=? WHERE email=?",
-      [hashedPassword, email]
-    );
+    await db.query("UPDATE users SET password=? WHERE email=?", [hashedPassword, email]);
   }
 }
 

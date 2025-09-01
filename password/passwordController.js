@@ -4,7 +4,7 @@ const PasswordModel = require("./passwordModels");
 
 // setup mail transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail", // or your SMTP service
+  service: "gmail", // or your SMTP provider
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -12,7 +12,27 @@ const transporter = nodemailer.createTransport({
 });
 
 class PasswordController {
-  // Step 1: Send OTP
+  // Step 1: Verify Email
+  static async verifyEmail(req, res) {
+    try {
+      const { email } = req.body;
+      console.log("Verifying email:", email);
+
+      const user = await PasswordModel.checkUser(email);
+      if (!user) {
+        console.log("Email not found:", email);
+        return res.status(404).json({ message: "Email not registered" });
+      }
+
+      console.log("Email verified:", email);
+      res.json({ message: "Email exists. Proceed to OTP." });
+    } catch (err) {
+      console.error("Error verifying email:", err);
+      res.status(500).json({ error: "Failed to verify email" });
+    }
+  }
+
+  // Step 2: Send OTP
   static async sendOTP(req, res) {
     try {
       const { email } = req.body;
@@ -35,44 +55,42 @@ class PasswordController {
 
       res.json({ message: "OTP sent successfully" });
     } catch (err) {
-      console.error(" Error sending OTP:", err);
+      console.error("Error sending OTP:", err);
       res.status(500).json({ error: "Failed to send OTP" });
     }
   }
 
-  // Step 2: Verify OTP & Reset Password
+  // Step 3: Verify OTP & Reset Password
   static async resetPassword(req, res) {
     try {
-      const { email, otp, newPassword } = req.body;
-      console.log(" Reset password attempt for:", email);
+      const { email, otp, newPassword, confirmPassword } = req.body;
+      console.log("Reset password attempt for:", email);
+
+      if (newPassword !== confirmPassword) {
+        console.log("Passwords do not match for:", email);
+        return res.status(400).json({ message: "Passwords do not match" });
+      }
 
       const record = await PasswordModel.findOTP(email);
       console.log("Fetched OTP record:", record);
 
       if (!record) {
-        console.log(" No OTP found for:", email);
         return res.status(400).json({ message: "No OTP found. Request again." });
       }
 
       if (record.otp !== otp) {
-        console.log("Invalid OTP entered for:", email);
         return res.status(400).json({ message: "Invalid OTP" });
       }
 
       if (Date.now() > record.expiry) {
-        console.log("OTP expired for:", email);
         return res.status(400).json({ message: "OTP expired" });
       }
 
       const hashed = await bcrypt.hash(newPassword, 10);
-      console.log("Password hashed successfully for:", email);
-
       await PasswordModel.updatePassword(email, hashed);
-      console.log("Password updated in DB for:", email);
-
       await PasswordModel.deleteOTP(email);
-      console.log("OTP deleted after reset for:", email);
 
+      console.log("Password reset successful for:", email);
       res.json({ message: "Password reset successful" });
     } catch (err) {
       console.error("Error resetting password:", err);
