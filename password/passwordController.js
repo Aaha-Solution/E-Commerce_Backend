@@ -53,26 +53,9 @@ class PasswordController {
   // Step 3: Verify OTP & Reset Password
   static async resetPassword(req, res) {
     try {
-      const { email, otp, newPassword, confirmPassword } = req.body;
+      const { email, newPassword} = req.body;
       console.log("Reset password attempt for:", email);
-
-      if (newPassword !== confirmPassword) {
-        return res.status(400).json({ message: "Passwords do not match" });
-      }
-
-      const record = await PasswordModel.findOTP(email);
-      if (!record) {
-        return res.status(400).json({ message: "No OTP found. Request again." });
-      }
-
-      if (record.otp !== otp) {
-        return res.status(400).json({ message: "Invalid OTP" });
-      }
-
-      if (Date.now() > record.expiry) {
-        return res.status(400).json({ message: "OTP expired" });
-      }
-
+      
       const hashed = await bcrypt.hash(newPassword, 10);
       await PasswordModel.updatePassword(email, hashed);
       await PasswordModel.deleteOTP(email);
