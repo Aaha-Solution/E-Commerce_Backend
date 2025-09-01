@@ -6,7 +6,7 @@ const PasswordController = require("./passwordController");
 router.post("/verify-email", PasswordController.verifyEmail);
 
 // Step 2: Send OTP
-router.post("/send-otp", PasswordController.sendOTP);
+router.post("/generate-otp", PasswordController.sendOTP);
 
 // Step 3: Reset Password
 router.post("/reset-password", PasswordController.resetPassword);
