@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 
 const authRoutes = require('./auth/authRoutes');
+const passwordRoutes = require('./password/passwordRoutes');
 
 const app = express();
 app.use(cors());
@@ -10,6 +11,7 @@ app.use(express.json());
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/password",passwordRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
