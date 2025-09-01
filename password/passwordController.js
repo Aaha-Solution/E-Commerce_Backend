@@ -12,39 +12,29 @@ const transporter = nodemailer.createTransport({
 });
 
 class PasswordController {
-  // Step 1: Verify Email
-  static async verifyEmail(req, res) {
+  // Step 1 + Step 2: Verify Email & Send OTP
+  static async verifyAndSendOTP(req, res) {
     try {
       const { email } = req.body;
-      console.log("Verifying email:", email);
+      console.log("Verifying email & sending OTP for:", email);
 
+      // check if user exists
       const user = await PasswordModel.checkUser(email);
       if (!user) {
         console.log("Email not found:", email);
         return res.status(404).json({ message: "Email not registered" });
       }
 
-      console.log("Email verified:", email);
-      res.json({ message: "Email exists. Proceed to OTP." });
-    } catch (err) {
-      console.error("Error verifying email:", err);
-      res.status(500).json({ error: "Failed to verify email" });
-    }
-  }
-
-  // Step 2: Send OTP
-  static async sendOTP(req, res) {
-    try {
-      const { email } = req.body;
-      console.log("OTP request for email:", email);
-
+      // generate OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const expiry = Date.now() + 5 * 60 * 1000; // 5 min validity
       console.log("Generated OTP:", otp, "Expiry:", new Date(expiry).toISOString());
 
+      // save OTP in DB
       await PasswordModel.saveOTP(email, otp, expiry);
       console.log("OTP saved to DB for:", email);
 
+      // send email
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
@@ -53,10 +43,10 @@ class PasswordController {
       });
       console.log("OTP email sent to:", email);
 
-      res.json({ message: "OTP sent successfully" });
+      res.json({ message: "Email verified & OTP sent successfully" });
     } catch (err) {
-      console.error("Error sending OTP:", err);
-      res.status(500).json({ error: "Failed to send OTP" });
+      console.error("Error in verifyAndSendOTP:", err);
+      res.status(500).json({ error: "Failed to process request" });
     }
   }
 
@@ -67,13 +57,10 @@ class PasswordController {
       console.log("Reset password attempt for:", email);
 
       if (newPassword !== confirmPassword) {
-        console.log("Passwords do not match for:", email);
         return res.status(400).json({ message: "Passwords do not match" });
       }
 
       const record = await PasswordModel.findOTP(email);
-      console.log("Fetched OTP record:", record);
-
       if (!record) {
         return res.status(400).json({ message: "No OTP found. Request again." });
       }
