@@ -33,30 +33,41 @@ class AuthController {
   }
 
   // Login (Admin + User)
-  static async login(req, res) {
-    try {
-      const { email, password } = req.body;
-      console.log("Login request body:", req.body);
-      const user = await AuthModel.findByEmail(email);
+ static async login(req, res) {
+  try {
+    const { email, password } = req.body;
+    console.log("Login request body:", req.body);
+    const user = await AuthModel.findByEmail(email);
 
-      if (!user) {
-        console.log("User not found with email:", email);
-        return res.status(400).json({ message: "Invalid credentials" });
-      }
-      const valid = await bcrypt.compare(password, user.password);
-      if (!valid) {
-        console.log("Invalid password for user:", email);
-        return res.status(400).json({ message: "Invalid credentials" });
-      }
-      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "1h" });
-      console.log("Login successful for user:", email);
-
-      res.json({ message: "Login successful", token, role: user.role });
-    } catch (err) {
-      console.error("Error during login:", err);
-      res.status(500).json({ error: err.message });
+    if (!user) {
+      console.log("User not found with email:", email);
+      return res.status(400).json({ message: "Invalid credentials" });
     }
+
+    let valid = false;
+
+    if (user.role === "admin") {
+      // Compare plain text (⚠️ insecure!)
+      valid = (password === user.password);
+    } else {
+      // Compare with bcrypt (normal users)
+      valid = await bcrypt.compare(password, user.password);
+    }
+
+    if (!valid) {
+      console.log("Invalid password for user:", email);
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "1h" });
+    console.log("Login successful for user:", email);
+
+    res.json({ message: "Login successful", token, role: user.role });
+  } catch (err) {
+    console.error("Error during login:", err);
+    res.status(500).json({ error: err.message });
   }
+}
 }
 
 module.exports = AuthController;
