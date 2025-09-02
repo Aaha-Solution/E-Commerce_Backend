@@ -20,6 +20,9 @@ app.use('/password', passwordRoutes);
 app.use('/product', productRoutes);
 app.use('/slides', slideRoutes);
 
+app.use("/uploads", express.static("uploads"));
+
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
