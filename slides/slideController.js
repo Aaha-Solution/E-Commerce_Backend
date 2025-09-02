@@ -15,6 +15,7 @@ class SlideController {
 
       res.status(201).json({ message: "Slide created", slideId, image: imagePath });
     } catch (error) {
+      console.error("Error in addSlide:", error); // log to server
       res.status(500).json({ error: error.message });
     }
   }
@@ -24,6 +25,7 @@ class SlideController {
       const slides = await SlideModel.getAllSlides();
       res.json(slides);
     } catch (error) {
+      console.error("Error in getSlides:", error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -34,10 +36,10 @@ class SlideController {
       if (!slide) return res.status(404).json({ message: "Slide not found" });
       res.json(slide);
     } catch (error) {
+      console.error("Error in getSlide:", error);
       res.status(500).json({ error: error.message });
     }
   }
 }
-
 
 module.exports = SlideController;
