@@ -1,6 +1,24 @@
 const SlideModel = require("../slides/slideModels");
 
 class SlideController {
+  static async addSlide(req, res) {
+    try {
+      const { title, description, buttonText, brand, name, collection } = req.body;
+
+      // multer gives file info in req.file
+      const imagePath = req.file ? req.file.filename : null;
+
+      const slideId = await SlideModel.createSlide(
+        { title, description, buttonText },
+        { brand, name, collection, image: imagePath }
+      );
+
+      res.status(201).json({ message: "Slide created", slideId, image: imagePath });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   static async getSlides(req, res) {
     try {
       const slides = await SlideModel.getAllSlides();
@@ -19,19 +37,7 @@ class SlideController {
       res.status(500).json({ error: error.message });
     }
   }
-
-  static async addSlide(req, res) {
-    try {
-      const { title, description, buttonText, perfume } = req.body;
-      const slideId = await SlideModel.createSlide(
-        { title, description, buttonText },
-        perfume
-      );
-      res.status(201).json({ message: "Slide created", slideId });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
 }
+
 
 module.exports = SlideController;
