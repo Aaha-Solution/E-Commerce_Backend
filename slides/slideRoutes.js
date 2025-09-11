@@ -13,6 +13,4 @@ router.get("/get", slideController.getSlides);
 // Get slide by ID
 router.get("/get/:id", slideController.getSlide);
 
-
-
 module.exports = router;

@@ -1,6 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require("path");
+const os = require("os");
+
+// Import Middleware
+const ipWhitelist = require("./middleware/ipWhitelist");
 
 // Import routes
 const authRoutes = require('./auth/authRoutes');
@@ -14,17 +19,39 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Use IP Whitelist Globally
+app.use(ipWhitelist);
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/password', passwordRoutes);
 app.use('/product', productRoutes);
 app.use('/slides', slideRoutes);
 
+// Serve uploads folder
 app.use("/uploads", express.static("uploads"));
 
+// Serve React frontend
+app.use(express.static(path.join(__dirname, "frontend/build")));
+
+//Catch-all route for React (Express v5 safe)
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "frontend/build", "index.html"));
+});
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server is running at: http://0.0.0.0:${PORT}`);
+
+  // Show LAN IPs
+  const networkInterfaces = os.networkInterfaces();
+  console.log("Available on:");
+  for (const iface of Object.values(networkInterfaces)) {
+    iface.forEach(details => {
+      if (details.family === "IPv4" && !details.internal) {
+        console.log(`➡ http://${details.address}:${PORT}`);
+      }
+    });
+  }
 });
