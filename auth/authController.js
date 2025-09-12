@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs");
+// const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const AuthModel = require("../auth/authModels");
 
@@ -16,11 +16,11 @@ class AuthController {
         console.log("Email already exists", email);
         return res.status(400).json({ message: "Email already exists" });
       }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      console.log("Hashed password:", hashedPassword);
+      // const hashedPassword = await bcrypt.hash(password, 10);
+      // console.log("Hashed password:", hashedPassword);
 
       const userId = await AuthModel.create(
-        firstname, lastname, email, mobile, hashedPassword, "user"
+        firstname, lastname, email, mobile, /*hashedPassword,*/ password, "user"
       );
 
       console.log("User created with ID:", userId);
@@ -56,7 +56,8 @@ class AuthController {
         valid = (password === user.password);
       } else {
         // Compare with bcrypt (normal users)
-        valid = await bcrypt.compare(password, user.password);
+        // valid = await bcrypt.compare(password, user.password);
+         valid = (password === user.password);
       }
 
       if (!valid) {
@@ -70,6 +71,17 @@ class AuthController {
       res.json({ message: "Login successful", token, role: user.role });
     } catch (err) {
       console.error("Error during login:", err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+
+  static async getUsers(req, res) {
+    try {
+      const users = await AuthModel.getAllUsers();
+      console.log("Fetched users:", users);
+      res.json({ users });
+    } catch (err) {
+      console.error("Error fetching users:", err);
       res.status(500).json({ error: err.message });
     }
   }

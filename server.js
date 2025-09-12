@@ -1,6 +1,5 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+const express = require("express");
+const cors = require("cors");
 const path = require("path");
 const os = require("os");
 
@@ -18,9 +17,13 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Use IP Whitelist Globally
 app.use(ipWhitelist);
+
+// Serve uploaded images statically
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use('/auth', authRoutes);
@@ -28,8 +31,6 @@ app.use('/password', passwordRoutes);
 app.use('/product', productRoutes);
 app.use('/slides', slideRoutes);
 
-// Serve uploads folder
-app.use("/uploads", express.static("uploads"));
 
 // Serve React frontend
 app.use(express.static(path.join(__dirname, "frontend/build")));
@@ -40,7 +41,6 @@ app.get("*", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running at: http://0.0.0.0:${PORT}`);
 

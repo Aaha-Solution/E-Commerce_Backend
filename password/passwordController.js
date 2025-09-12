@@ -4,7 +4,7 @@ const PasswordModel = require("./passwordModels");
 
 // setup mail transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail", // or your SMTP provider
+  service: "gmail", // use Gmail or replace with SMTP provider
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -18,23 +18,23 @@ class PasswordController {
       const { email } = req.body;
       console.log("Verifying email & sending OTP for:", email);
 
-      // check if user exists
+      // 1️⃣ Check if user exists
       const user = await PasswordModel.checkUser(email);
       if (!user) {
         console.log("Email not found:", email);
         return res.status(404).json({ message: "Email not registered" });
       }
 
-      // generate OTP
+      // 2️⃣ Generate OTP once
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const expiry = Date.now() + 5 * 60 * 1000; // 5 min validity
       console.log("Generated OTP:", otp, "Expiry:", new Date(expiry).toISOString());
 
-      // save OTP in DB
+      // 3️⃣ Save OTP in DB
       await PasswordModel.saveOTP(email, otp, expiry);
       console.log("OTP saved to DB for:", email);
 
-      // send email
+      // 4️⃣ Send email with same OTP
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
@@ -43,21 +43,63 @@ class PasswordController {
       });
       console.log("OTP email sent to:", email);
 
-      res.json({ message: "Email verified & OTP sent successfully" });
+      res.json({ message: "OTP sent successfully" });
     } catch (err) {
       console.error("Error in verifyAndSendOTP:", err);
       res.status(500).json({ error: "Failed to process request" });
     }
   }
 
-  // Step 3: Verify OTP & Reset Password
+  // Step 2.5: Verify OTP only
+  static async verifyOTP(req, res) {
+    try {
+      const { email, otp } = req.body;
+      console.log("Verifying OTP for:", email, otp);
+
+      // 1️⃣ Get OTP record by email
+      const record = await PasswordModel.findOTP(email);
+      if (!record) {
+        return res.status(400).json({ message: "No OTP found. Request again." });
+      }
+
+      // 2️⃣ Debug log
+      console.log("DB record OTP:", record.otp, " Type:", typeof record.otp);
+      console.log("User OTP:", otp, " Type:", typeof otp);
+
+      // 3️⃣ Compare as string
+      if (String(record.otp) !== String(otp)) {
+        return res.status(400).json({ message: "Invalid OTP" });
+      }
+
+      // 4️⃣ Check expiry
+      if (Date.now() > Number(record.expiry)) {
+        return res.status(400).json({ message: "OTP expired" });
+      }
+
+      // 5️⃣ (Optional) Delete OTP after success
+      await PasswordModel.deleteOTP(email);
+
+      // 6️⃣ Success
+      return res.json({ success: true, message: "OTP verified successfully" });
+    } catch (err) {
+      console.error("Error verifying OTP:", err);
+      return res.status(500).json({ error: "Failed to verify OTP" });
+    }
+  }
+
+  // Step 3: Reset Password
   static async resetPassword(req, res) {
     try {
-      const { email, newPassword} = req.body;
+      const { email, newPassword } = req.body;
       console.log("Reset password attempt for:", email);
-      
+
+      // 1️⃣ Hash password
       const hashed = await bcrypt.hash(newPassword, 10);
+
+      // 2️⃣ Update password
       await PasswordModel.updatePassword(email, hashed);
+
+      // 3️⃣ Remove OTP (no reuse)
       await PasswordModel.deleteOTP(email);
 
       console.log("Password reset successful for:", email);
@@ -67,32 +109,6 @@ class PasswordController {
       res.status(500).json({ error: "Failed to reset password" });
     }
   }
-  // Step 2.5: Verify OTP (without resetting password)
-static async verifyOTP(req, res) {
-  try {
-    const { email, otp } = req.body;
-    console.log("Verifying OTP for:", email);
-
-    const record = await PasswordModel.findOTP(email);
-    if (!record) {
-      return res.status(400).json({ message: "No OTP found. Request again." });
-    }
-
-    if (record.otp !== otp) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    if (Date.now() > record.expiry) {
-      return res.status(400).json({ message: "OTP expired" });
-    }
-
-    res.json({ message: "OTP verified successfully" });
-  } catch (err) {
-    console.error("Error verifying OTP:", err);
-    res.status(500).json({ error: "Failed to verify OTP" });
-  }
-}
-
 }
 
 module.exports = PasswordController;
