@@ -22,16 +22,17 @@ class AdminModel {
         return rows[0]; // return single user
     }
 
-    static async updateUser(id, firstname, lastname, mobile, password) {
-        const sql = `
+   static async updateUser(id, firstname, lastname, email, mobile, password, role) {
+  const sql = `
     UPDATE users 
-    SET firstname = ?, lastname = ?, mobile = ?, password = ?
+    SET firstname = ?, lastname = ?, email = ?, mobile = ?, password = ?, role = ?
     WHERE id = ?
   `;
-        const values = [firstname, lastname, mobile, password, id];
-        const [result] = await db.query(sql, values);
-        return result;
-    }
+  const values = [firstname, lastname, email, mobile, password, role, id];
+  const [result] = await db.query(sql, values);
+  return result;
+}
+
 
  
     static async deleteUser(id) {

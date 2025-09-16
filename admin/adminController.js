@@ -16,7 +16,7 @@ static async getUsers(req, res) {
 
   static async updateUser(req, res) {
     try {
-        const { id, firstname, lastname, mobile, password } = req.body;
+        const { id, firstname, lastname, email, mobile, password, role} = req.body;
         // console.log("Update request body:", req.body);
 
         // Check if user exists
@@ -30,8 +30,10 @@ static async getUsers(req, res) {
             id,
             firstname,
             lastname,
+            email,
             mobile,
-            password
+            password,
+            role
         );
 
         res.json({
