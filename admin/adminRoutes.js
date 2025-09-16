@@ -4,6 +4,7 @@ const AdminController = require("../admin/adminController");
 
 router.get("/getUsers", AdminController.getUsers); // Get list of users
 router.put("/updateUsers/:id",AdminController.updateUser); // Update user details
-router.delete("/deleteUsers/:id", AdminController.deleteUser); // Delete user
+router.delete('/deleteUsers/:id', AdminController.deleteUser); // Delete user
+
 
 module.exports = router;
