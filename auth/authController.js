@@ -51,7 +51,7 @@ class AuthController {
 
       let valid = false;
 
-      if (user.role === "admin") {
+      if (user.role === "Admin") {
         // Compare plain text (⚠️ insecure!)
         valid = (password === user.password);
       } else {
