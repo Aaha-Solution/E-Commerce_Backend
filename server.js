@@ -7,10 +7,12 @@ const os = require("os");
 const ipWhitelist = require("./middleware/ipWhitelist");
 
 // Import routes
+const adminRoutes = require('./admin/adminRoutes');
 const authRoutes = require('./auth/authRoutes');
 const passwordRoutes = require('./password/passwordRoutes');
 const productRoutes = require('./product/productRoutes');
 const slideRoutes = require('./slides/slideRoutes');
+
 
 const app = express();
 
@@ -26,6 +28,7 @@ app.use(ipWhitelist);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
+app.use('/admin', adminRoutes);
 app.use('/auth', authRoutes);
 app.use('/password', passwordRoutes);
 app.use('/product', productRoutes);

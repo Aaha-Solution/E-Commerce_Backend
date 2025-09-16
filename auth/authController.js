@@ -75,16 +75,7 @@ class AuthController {
     }
   }
 
-  static async getUsers(req, res) {
-    try {
-      const users = await AuthModel.getAllUsers();
-      console.log("Fetched users:", users);
-      res.json({ users });
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      res.status(500).json({ error: err.message });
-    }
-  }
-}
 
+
+}
 module.exports = AuthController;
