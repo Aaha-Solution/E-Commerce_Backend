@@ -18,23 +18,23 @@ class PasswordController {
       const { email } = req.body;
       console.log("Verifying email & sending OTP for:", email);
 
-      // 1️⃣ Check if user exists
+      //Check if user exists
       const user = await PasswordModel.checkUser(email);
       if (!user) {
         console.log("Email not found:", email);
         return res.status(404).json({ message: "Email not registered" });
       }
 
-      // 2️⃣ Generate OTP once
+      //Generate OTP once
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const expiry = Date.now() + 5 * 60 * 1000; // 5 min validity
       console.log("Generated OTP:", otp, "Expiry:", new Date(expiry).toISOString());
 
-      // 3️⃣ Save OTP in DB
+      //Save OTP in DB
       await PasswordModel.saveOTP(email, otp, expiry);
       console.log("OTP saved to DB for:", email);
 
-      // 4️⃣ Send email with same OTP
+      //Send email with same OTP
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
@@ -56,30 +56,30 @@ class PasswordController {
       const { email, otp } = req.body;
       console.log("Verifying OTP for:", email, otp);
 
-      // 1️⃣ Get OTP record by email
+      //Get OTP record by email
       const record = await PasswordModel.findOTP(email);
       if (!record) {
         return res.status(400).json({ message: "No OTP found. Request again." });
       }
 
-      // 2️⃣ Debug log
+      //Debug log
       console.log("DB record OTP:", record.otp, " Type:", typeof record.otp);
       console.log("User OTP:", otp, " Type:", typeof otp);
 
-      // 3️⃣ Compare as string
+      //Compare as string
       if (String(record.otp) !== String(otp)) {
         return res.status(400).json({ message: "Invalid OTP" });
       }
 
-      // 4️⃣ Check expiry
+      //Check expiry
       if (Date.now() > Number(record.expiry)) {
         return res.status(400).json({ message: "OTP expired" });
       }
 
-      // 5️⃣ (Optional) Delete OTP after success
+      //(Optional) Delete OTP after success
       await PasswordModel.deleteOTP(email);
 
-      // 6️⃣ Success
+      //Success
       return res.json({ success: true, message: "OTP verified successfully" });
     } catch (err) {
       console.error("Error verifying OTP:", err);
@@ -88,27 +88,25 @@ class PasswordController {
   }
 
   // Step 3: Reset Password
-  static async resetPassword(req, res) {
-    try {
-      const { email, newPassword } = req.body;
-      console.log("Reset password attempt for:", email);
+static async resetPassword(req, res) {
+  try {
+    const { email, newPassword } = req.body;
+    console.log("Reset password attempt for:", email);
 
-      // 1️⃣ Hash password
-      const hashed = await bcrypt.hash(newPassword, 10);
+    // Update password directly (no hashing)
+    await PasswordModel.updatePassword(email, newPassword);
 
-      // 2️⃣ Update password
-      await PasswordModel.updatePassword(email, hashed);
+    // Remove OTP (no reuse)
+    await PasswordModel.deleteOTP(email);
 
-      // 3️⃣ Remove OTP (no reuse)
-      await PasswordModel.deleteOTP(email);
-
-      console.log("Password reset successful for:", email);
-      res.json({ message: "Password reset successful" });
-    } catch (err) {
-      console.error("Error resetting password:", err);
-      res.status(500).json({ error: "Failed to reset password" });
-    }
+    console.log("Password reset successful for:", email);
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error("Error resetting password:", err);
+    res.status(500).json({ error: "Failed to reset password" });
   }
+}
+  
 }
 
 module.exports = PasswordController;

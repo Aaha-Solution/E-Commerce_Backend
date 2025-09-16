@@ -34,10 +34,11 @@ static async saveOTP(email, otp, expiry) {
     await db.query("DELETE FROM password_resets WHERE email=?", [email]);
   }
 
-  // update password
-  static async updatePassword(email, hashedPassword) {
-    await db.query("UPDATE users SET password=? WHERE email=?", [hashedPassword, email]);
-  }
+ // update password
+static async updatePassword(email, newPassword) {
+  await db.query("UPDATE users SET password = ? WHERE email = ?", [newPassword, email]);
+}
+
 }
 
 module.exports = PasswordModel;
