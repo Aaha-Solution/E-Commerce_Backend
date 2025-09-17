@@ -1,4 +1,5 @@
-const ProductModel = require("./productModels");
+const ProductModel = require("../product/productModels");
+const CategoriesModel = require("../adminCategories/categoriesModels");
 
 class ProductController {
     static async addProduct(req, res) {
@@ -6,38 +7,67 @@ class ProductController {
             console.log("Incoming request body:", req.body);
             console.log("Incoming file:", req.file);
 
-            const { name, price, discount, rating, category, stock, description } = req.body;
-            const image = req.file ? req.file.filename : null; // image file name
+            let { name, price, discount, rating, category, stock, description } = req.body;
+            const image = req.file ? req.file.filename : null;
 
-            console.log("Processed image filename:", image);
+            // Convert strings to numbers
+            price = parseFloat(price) || 0;
+            discount = parseFloat(discount) || 0;
+            stock = parseInt(stock) || 0;
 
-            const productId = await ProductModel.createProduct({
+            // Calculate final price
+            let finalPrice = price;
+            if (discount > 0) {
+                finalPrice = price - (price * discount / 100);
+            }
+
+            // Calculate stock value
+            const stockValue = finalPrice * stock;
+
+            // Find or create category
+            let category_id = null;
+            if (category) {
+                const existingCategory = await CategoriesModel.getAllCategories();
+                const found = existingCategory.find(c => c.productCategory === category);
+
+                if (found) {
+                    category_id = found.id;
+                } else {
+                    const newCategory = await CategoriesModel.addCategory(category, "admin");
+                    category_id = newCategory.id;
+                }
+            }
+
+            const productData = {
                 name,
                 price,
                 discount,
+                final_price: finalPrice,
                 rating,
-                category,
+                category_id,
                 stock,
+                stock_value: stockValue,
                 description,
                 image
-            });
-            console.log("New product inserted with ID:", productId);
+            };
 
-            res.json({ message: "Product added successfully", productId });
+            const product = await ProductModel.createProduct(productData);
+
+            res.json({
+                message: "Product added successfully",
+                product
+            });
         } catch (err) {
-            console.error(err);
+            console.error("Error adding product:", err);
             res.status(500).json({ error: err.message });
         }
     }
 
-    static async getProducts(req, res) {
+    static async getAllProducts(req, res) {
         try {
-            console.log("Fetching all products from DB...");
             const products = await ProductModel.getAllProducts();
-            console.log("Products fetched:", products.length);
-            res.json({ products });
+            res.json(products);
         } catch (err) {
-            console.error("Error fetching products:", err);
             res.status(500).json({ error: err.message });
         }
     }
