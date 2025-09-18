@@ -1,30 +1,30 @@
 const CategoriesModel = require("../adminCategories/categoriesModels");
 
 class CategoriesController {
- static async addCategory(req, res) {
-    try {
-        const { productCategory } = req.body;
-        console.log("Add Category request body:", req.body);
+    static async addCategory(req, res) {
+        try {
+            const { productCategory } = req.body;
+            console.log("Add Category request body:", req.body);
 
-        if (!productCategory) {
-            console.log("productCategory is required");
-            return res.status(400).json({ message: "productCategory is required" });
+            if (!productCategory) {
+                console.log("productCategory is required");
+                return res.status(400).json({ message: "productCategory is required" });
+            }
+
+            // Default updatedBy = admin
+            const newCategory = await CategoriesModel.addCategory(productCategory, "admin");
+
+            res.json({
+                message: "Product Category added successfully",
+                category: newCategory,
+            });
+        } catch (err) {
+            console.error("Error adding product category:", err);
+            res.status(500).json({ error: err.message });
         }
+    }
 
-        // Default updatedBy = admin
-        const newCategory = await CategoriesModel.addCategory(productCategory, "admin");
 
-        res.json({
-            message: "Product Category added successfully",
-            category: newCategory,
-        });
-    } catch (err) {
-        console.error("Error adding product category:", err);
-        res.status(500).json({ error: err.message });
-    }           
-}
-
-    
     static async getCategories(req, res) {
         try {
             const categories = await CategoriesModel.getAllCategories();

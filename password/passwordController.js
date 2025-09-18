@@ -88,25 +88,25 @@ class PasswordController {
   }
 
   // Step 3: Reset Password
-static async resetPassword(req, res) {
-  try {
-    const { email, newPassword } = req.body;
-    console.log("Reset password attempt for:", email);
+  static async resetPassword(req, res) {
+    try {
+      const { email, newPassword } = req.body;
+      console.log("Reset password attempt for:", email);
 
-    // Update password directly (no hashing)
-    await PasswordModel.updatePassword(email, newPassword);
+      // Update password directly (no hashing)
+      await PasswordModel.updatePassword(email, newPassword);
 
-    // Remove OTP (no reuse)
-    await PasswordModel.deleteOTP(email);
+      // Remove OTP (no reuse)
+      await PasswordModel.deleteOTP(email);
 
-    console.log("Password reset successful for:", email);
-    res.json({ message: "Password reset successful" });
-  } catch (err) {
-    console.error("Error resetting password:", err);
-    res.status(500).json({ error: "Failed to reset password" });
+      console.log("Password reset successful for:", email);
+      res.json({ message: "Password reset successful" });
+    } catch (err) {
+      console.error("Error resetting password:", err);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
   }
-}
-  
+
 }
 
 module.exports = PasswordController;

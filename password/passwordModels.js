@@ -7,21 +7,21 @@ class PasswordModel {
     return rows[0];
   }
 
-static async saveOTP(email, otp, expiry) {
-  // First try update
-  const [update] = await db.query(
-    "UPDATE password_resets SET otp=?, expiry=? WHERE email=?",
-    [otp, expiry, email]
-  );
-
-  if (update.affectedRows === 0) {
-    // If no row exists, insert new
-    await db.query(
-      "INSERT INTO password_resets (email, otp, expiry) VALUES (?, ?, ?)",
-      [email, otp, expiry]
+  static async saveOTP(email, otp, expiry) {
+    // First try update
+    const [update] = await db.query(
+      "UPDATE password_resets SET otp=?, expiry=? WHERE email=?",
+      [otp, expiry, email]
     );
+
+    if (update.affectedRows === 0) {
+      // If no row exists, insert new
+      await db.query(
+        "INSERT INTO password_resets (email, otp, expiry) VALUES (?, ?, ?)",
+        [email, otp, expiry]
+      );
+    }
   }
-}
 
   // find OTP by email
   static async findOTP(email) {
@@ -34,10 +34,10 @@ static async saveOTP(email, otp, expiry) {
     await db.query("DELETE FROM password_resets WHERE email=?", [email]);
   }
 
- // update password
-static async updatePassword(email, newPassword) {
-  await db.query("UPDATE users SET password = ? WHERE email = ?", [newPassword, email]);
-}
+  // update password
+  static async updatePassword(email, newPassword) {
+    await db.query("UPDATE users SET password = ? WHERE email = ?", [newPassword, email]);
+  }
 
 }
 

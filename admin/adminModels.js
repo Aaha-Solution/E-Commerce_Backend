@@ -22,23 +22,23 @@ class AdminModel {
         return rows[0]; // return single user
     }
 
-   static async updateUser(id, firstname, lastname, email, mobile, password, role) {
-  const sql = `
+    static async updateUser(id, firstname, lastname, email, mobile, password, role) {
+        const sql = `
     UPDATE users 
     SET firstname = ?, lastname = ?, email = ?, mobile = ?, password = ?, role = ?
     WHERE id = ?
   `;
-  const values = [firstname, lastname, email, mobile, password, role, id];
-  const [result] = await db.query(sql, values);
-  return result;
-}
+        const values = [firstname, lastname, email, mobile, password, role, id];
+        const [result] = await db.query(sql, values);
+        return result;
+    }
 
 
- 
+
     static async deleteUser(id) {
         const sql = "DELETE FROM users WHERE id = ?";
         const [result] = await db.query(sql, [id]);
         return result;
-    }   
+    }
 }
 module.exports = AdminModel;

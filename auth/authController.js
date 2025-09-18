@@ -57,7 +57,7 @@ class AuthController {
       } else {
         // Compare with bcrypt (normal users)
         // valid = await bcrypt.compare(password, user.password);
-         valid = (password === user.password);
+        valid = (password === user.password);
       }
 
       if (!valid) {
