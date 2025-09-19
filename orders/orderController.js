@@ -23,12 +23,12 @@ class OrderController {
             }
 
             // Prices
-            const unitPrice = product.final_price;
+            const unitPrice = product.finalPrice;
             const totalPrice = unitPrice * qty;
 
             // New stock
             const newStock = product.stock - qty;
-            const newStockValue = product.final_price * newStock;
+            const newStockValue = product.finalPrice * newStock;
 
             // Update stock
             await ProductModel.updateStock(product_id, newStock, newStockValue);
@@ -39,13 +39,13 @@ class OrderController {
                 product_id,
                 quantity: qty,
                 price: unitPrice,
-                total_price: totalPrice
+                totalPrice: totalPrice
             });
 
             res.json({
                 message: "Order placed successfully",
                 order,
-                remaining_stock: newStock
+                remainingStock: newStock
             });
 
         } catch (err) {
@@ -55,26 +55,43 @@ class OrderController {
     }
 
     // Update order status
-    static async updateOrderStatus(req, res) {
+static async updateOrderStatus(req, res) {
+    try {
+        const { orderId } = req.params;
+        const { status } = req.body;
+
+        console.log("Incoming Order ID:", orderId);
+        console.log("Incoming Status:", status);
+
+        // Allowed statuses
+        const validStatuses = ["pending", "completed", "cancelled"];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: "Invalid status value" });
+        }
+
+        // Call model
+        const updatedOrder = await OrderModel.updateStatus(orderId, status);
+
+        res.json({
+            message: `Order status updated to ${status}`,
+            order: updatedOrder
+        });
+    } catch (err) {
+        console.error("Error updating order status:", err);
+        res.status(500).json({ error: err.message });
+    }
+}
+
+//recent orders completed
+
+    static async getRecentCompletedOrders(req, res) {
         try {
-            const { orderId } = req.params;
-            const { status } = req.body;
-
-            const validStatuses = ["pending", "completed", "cancelled"];
-            if (!validStatuses.includes(status)) {
-                return res.status(400).json({ message: "Invalid status value" });
-            }
-
-            const updatedOrder = await OrderModel.updateStatus(orderId, status);
-
-            res.json({
-                message: `Order status updated to ${status}`,
-                order: updatedOrder
-            });
+            const orders = await OrderModel.getRecentCompletedOrders();
+            res.json(orders);
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: err.message });
-        }
+        }   
     }
 }
 

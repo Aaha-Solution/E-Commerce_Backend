@@ -3,16 +3,16 @@ const db = require("../db");
 class ProductModel {
   // Create a new product
   static async createProduct(product) {
-    const { name, price, discount, final_price, rating, category_id, stock, stock_value, description, image } = product;
+    const { name, price, discount, finalPrice, rating, category_id, stock, stock_value, description, image } = product;
 
     const sql = `
       INSERT INTO products 
-      (name, price, discount, final_price, rating, category_id, stock, stock_value, description, image)
+      (name, price, discount, finalPrice, rating, category_id, stock, stock_value, description, image)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await db.query(sql, [
-      name, price, discount, final_price, rating, category_id, stock, stock_value, description, image
+      name, price, discount, finalPrice, rating, category_id, stock, stock_value, description, image
     ]);
 
     return { id: result.insertId, ...product };
@@ -31,11 +31,34 @@ class ProductModel {
   }
 
   // Update stock for a product
-  static async updateStock(id, stock, stock_value) {
+
+  static async updateProduct(id, updatedProductData) {
+    const {
+      name,
+      price,
+      discount,
+      finalPrice,
+      rating,
+      category_id,
+      stock,
+      stock_value,
+      description,
+      image
+    } = updatedProductData;
+
     await db.query(
-      "UPDATE products SET stock = ?, stock_value = ? WHERE id = ?",
-      [stock, stock_value, id]
+      `UPDATE products 
+     SET name = ?, price = ?, discount = ?, finalPrice = ?, rating = ?, 
+         category_id = ?, stock = ?, stock_value = ?, description = ?, image = ?
+     WHERE id = ?`,
+      [name, price, discount, finalPrice, rating, category_id, stock, stock_value, description, image, id]
     );
+  }
+
+  // Delete a product by ID
+  static async deleteProductById(id) {
+    const [result] = await db.query("DELETE FROM products WHERE id = ?", [id]);
+    return result.affectedRows > 0;
   }
 }
 

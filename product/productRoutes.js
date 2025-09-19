@@ -8,7 +8,13 @@ const upload = require("../middleware/upload");
 router.post("/add", upload.single("image"), ProductController.addProduct);
 
 // Get all products
-router.get("/", ProductController.getAllProducts);
+router.get("/adgetproduct", ProductController.getAllProducts);
+
+//update product (admin)
+router.put("/adproupdate/:id", upload.single("image"), ProductController.updateProduct);
+
+//Delete product by ID
+router.delete("/adprodelete/:id", ProductController.deleteProduct);
 
 
-module.exports = router;
+module.exports = router; 
